@@ -3,6 +3,7 @@ import requests
 import logging
 from typing import List, Tuple, Dict
 import csv
+import os
 
 # Custom Types
 ReviewList = List[Tuple[int, str]]
@@ -46,7 +47,7 @@ def scrape_sidebar(sidebar: bs4.Tag) -> AnimeDetails:
     def get_statistics(label: str) -> str:
         return find_sidebar_statistics_by_label(label, sidebar)
 
-    return {"episodes": get_info("Episodes:"),
+    return {"num_episodes": get_info("Episodes:"),
             "studios": get_info("Studios:"),
             "rating": get_info("Rating:"),
             "score": get_statistics("Score:"),
@@ -76,8 +77,12 @@ def scrape_review_main_bar(td: bs4.Tag) -> ReviewList:
 
         unformatted_strings = [x for x in review_div.children if isinstance(x, bs4.NavigableString)]
 
-        for paragraph in review_div.span(text=True):
-            unformatted_strings.append(paragraph)
+        # Let's get everything after the "Read More", if it exists...
+        if review_div.span:
+            paragraphs = review_div.span(text=True)
+            if paragraphs:
+                for paragraph in paragraphs:
+                    unformatted_strings.append(paragraph)
 
         review = "\n".join([x.strip() for x in unformatted_strings if x not in ("Helpful", "\n")])
 
@@ -154,7 +159,7 @@ if __name__ == '__main__':
             anime_info_list.append(anime_info)
             all_reviews[anime_id] = reviews
 
-    with open(f"{args.output_file}", "w") as csvfile:
+    with open(f"{args.output_file}", "w", encoding='utf-8') as csvfile:
         metadata_csv = csv.writer(csvfile)
         columns = ("anime_id", "num_episodes", "studios", "rating", "score", "rank", "popularity_rank")
         metadata_csv.writerow(columns)
@@ -162,10 +167,10 @@ if __name__ == '__main__':
             metadata_csv.writerow((anime.get(column) for column in columns))
 
 
-
-
-    for anime_id, review_list in all_reviews:
-        with open(f"{args.reviews_directory}/{anime_id}.csv", "w") as csvfile:
+    for anime_id, review_list in all_reviews.items():
+        if not os.path.exists(args.reviews_directory):
+            os.mkdir(args.reviews_directory)
+        with open(f"{args.reviews_directory}/{anime_id}.csv", "w", encoding='utf-8') as csvfile:
             review_csv = csv.writer(csvfile)
             review_csv.writerow(("overall", "review"))
             for review in review_list:
