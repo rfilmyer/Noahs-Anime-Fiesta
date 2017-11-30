@@ -2,6 +2,7 @@ import bs4
 import requests
 import logging
 from typing import List, Tuple, Dict
+import csv
 
 # Custom Types
 ReviewList = List[Tuple[int, str]]
@@ -106,9 +107,69 @@ def get_paged_reviews_by_id(anime_id: int, session: requests.Session=None, page_
     if not session:
         session = requests
     review_response = session.get(reviews_url.format(anime_id=anime_id))
-    return parse_review_page(bs4.BeautifulSoup(review_response.text, "lxml"))
+    anime_info, reviews = parse_review_page(bs4.BeautifulSoup(review_response.text, "lxml"))
+    anime_info["anime_id"] = anime_id
+    return anime_info, reviews
 
-
+def get_data_by_anime_id(anime_id: int, session: requests.Session=None) -> AnimeListing:
+    if not session:
+        session = requests
+    anime_info, reviews = get_paged_reviews_by_id(anime_id, session)
+    return anime_info, reviews
 
 if __name__ == '__main__':
-    pass
+    import argparse
+    parser = argparse.ArgumentParser(description="Get reviews and metadata from MyAnimeList")
+    parser.add_argument("-a", "--anime-id", type=int, nargs='*',
+                        help="Specify one or more anime IDs for which to pull data.")
+    parser.add_argument("-f", "--from-file", type=str,
+                        help="Read a list of anime IDs from a file.")
+    parser.add_argument("--reviews-directory", "-r", type=str,
+                        help="The folder where the script will store review data.",
+                        default="reviews")
+    parser.add_argument("--output-file", "-o", type=str,
+                        help="Where to put a file containing extended metadata about each anime.",
+                        default="metadata.csv")
+    args = parser.parse_args()
+
+
+    anime_info_list = []
+    all_reviews = {}
+
+    if args.anime_id:
+        session = requests.Session()
+        for anime_id in args.anime_id:
+            anime_info, reviews = get_data_by_anime_id(anime_id, session)
+            anime_info_list.append(anime_info)
+            all_reviews[anime_id] = reviews
+
+    if args.from_file:
+        with open(args.from_file) as f:
+            anime_ids = f.readlines()
+
+        session = requests.Session()
+        for anime_id in anime_ids:
+            anime_id = int(anime_id.strip())
+            anime_info, reviews = get_data_by_anime_id(anime_id, session)
+            anime_info_list.append(anime_info)
+            all_reviews[anime_id] = reviews
+
+    with open(f"{args.output_file}", "w") as csvfile:
+        metadata_csv = csv.writer(csvfile)
+        columns = ("anime_id", "num_episodes", "studios", "rating", "score", "rank", "popularity_rank")
+        metadata_csv.writerow(columns)
+        for anime in anime_info_list:
+            metadata_csv.writerow((anime.get(column) for column in columns))
+
+
+
+
+    for anime_id, review_list in all_reviews:
+        with open(f"{args.reviews_directory}/{anime_id}.csv", "w") as csvfile:
+            review_csv = csv.writer(csvfile)
+            review_csv.writerow(("overall", "review"))
+            for review in review_list:
+                review_csv.writerow(review)
+
+
+
