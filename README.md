@@ -1,2 +1,4 @@
 # Noahs-Anime-Fiesta
-Final 
+Final
+
+Data available at: https://www.kaggle.com/CooperUnion/anime-recommendations-database/data 
