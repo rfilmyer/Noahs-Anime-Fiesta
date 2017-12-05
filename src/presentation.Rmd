@@ -25,7 +25,21 @@ panderOptions('table.split.table', Inf)
 
 ```{r}
 # Load data
-animes <- read.csv('../data/raw/anime.csv', header = TRUE, stringsAsFactors = FALSE)
+animes <- read.csv('../data/clean/animes.csv', header = TRUE, stringsAsFactors = FALSE)
+```
+
+# Let's look at the top anime by rating
+```{r}
+df <- data.frame(Anime = animes$name, Rating = animes$rating, stringsAsFactors = TRUE) # want names as factors for plotting
+
+df <- df[order(df$Rating), ]  # sort by ranking
+df$Anime <- factor(df$Anime, levels = df$Anime)  # to retain the order in plot
+
+ggplot(df, aes(x=Anime, y=Rating)) + 
+  geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  labs(title="Top Anime Ratings",
+       caption="source: MAL dataset") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
 ```
 
 ```{r}
@@ -75,4 +89,19 @@ ggplot(df, aes(x=Student, y=Score)) +
        subtitle="Squared Error of Favorite Anime Rating", 
        caption="source: In-Class Survey") + 
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+## Let's explore the distribution of ratings among some different groupings
+
+# First, does type (Movie, TV show,...) matter?
+```{r}
+animes %>% 
+  ggplot(aes(rating, group = type)) +
+  geom_density(aes(fill = type), alpha = .4) +
+  xlim(0, 10)
+```
+
+# Explore the genre too!
+```{r}
+
 ```
