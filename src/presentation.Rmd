@@ -5,6 +5,9 @@ date: "December 4, 2017"
 output: html_document
 ---
 
+Lots of data exploration inspiration from Michael Griffiths:
+https://www.kaggle.com/msjgriffiths/exploratory-analysis/code
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -19,6 +22,7 @@ lib('dplyr')
 lib('ggplot2')
 theme_set(theme_bw())
 lib('tidyverse')
+lib('formattable')
 lib('pander')
 panderOptions('table.split.table', Inf)
 ```
@@ -26,22 +30,94 @@ panderOptions('table.split.table', Inf)
 ```{r}
 # Load data
 animes <- read.csv('../data/clean/animes.csv', header = TRUE, stringsAsFactors = FALSE)
+genres <- read.csv('../data/clean/genres.csv', header = TRUE, stringsAsFactors = FALSE)
+ratings <- read.csv('../data/raw/no_null_ratings.csv', header = TRUE)
 ```
 
-# Let's look at the top anime by rating
+# Let's look at the top anime by avg rating
 ```{r}
+N <- 10
 df <- data.frame(Anime = animes$name, Rating = animes$rating, stringsAsFactors = TRUE) # want names as factors for plotting
 
-df <- df[order(df$Rating), ]  # sort by ranking
+df <- df[order(df$Rating, decreasing = TRUE), ]  # sort by ranking
 df$Anime <- factor(df$Anime, levels = df$Anime)  # to retain the order in plot
+df <- df[1:N,] # cut off the top N
 
 ggplot(df, aes(x=Anime, y=Rating)) + 
   geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  coord_cartesian(ylim = c(9.0, 10.0)) +
   labs(title="Top Anime Ratings",
        caption="source: MAL dataset") + 
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
 ```
 
+## Let's explore the distribution of ratings among some different groupings
+
+# First, does type (Movie, TV show,...) matter?
+```{r}
+animes %>% 
+  ggplot(aes(rating, group = type)) +
+  geom_density(aes(fill = type), alpha = .4) +
+  xlim(0, 10)
+```
+
+# Looks like it does! Let's look more closely at the variation between types
+```{r}
+animes %>% 
+  group_by(type) %>% 
+  summarise(
+    average.people = mean(members),
+    sd.people = sd(members),
+    average.rating = mean(rating, na.rm = T),
+    sd.rating = sd(rating, na.rm = T)
+  ) %>% 
+  formattable()
+```
+
+
+# Explore the genre too!
+```{r}
+#g <- genres %>% 
+#  ggplot(aes(rating, group = genre)) +
+#  geom_density(aes(fill = genre), alpha = .4)
+
+#ggplotly(g)
+```
+
+# In our dataset, what's the distribution of user ratings?
+```{r}
+g <- ratings %>% ggplot() # Common data throughout all plots
+
+g + geom_bar(aes(x = factor(rating))) # Bar plot
+
+# Create a fake grouping variable, for a violin plot of 1 dim 
+g + geom_violin(aes(x = factor(0), y = rating), trim = FALSE) + 
+  xlab("") + scale_x_discrete(breaks = NULL)
+  
+summary(ratings$rating)
+ratings.sd <- sd(ratings$rating)
+print(ratings.sd)
+```
+
+# School days is a notoriously controversial anime. Is the variance of users' ratings of this anime higher
+# than it is for most anime?
+```{r}
+school_days.id <- filter(animes, name == "School Days")$anime_id
+school_days.ratings <- filter(ratings, anime_id == school_days.id)
+school_days.sd <- sd(school_days.ratings$rating)
+print(ratings.sd)
+print(school_days.sd)
+
+g <- school_days.ratings %>% ggplot() # Common data throughout all plots
+
+g + geom_bar(aes(x = factor(rating))) # Bar plot
+
+# Create a fake grouping variable, for a boxplot of 1 dim
+g + geom_violin(aes(x = factor(0), y = as.factor(rating)), trim = FALSE) + 
+  xlab("") + scale_x_discrete(breaks = NULL)
+```
+# Yeah, looks like the 
+# Let's compute class rankings to find the true Weebs
 ```{r}
 # Weeb score
 MAX_SCORE <- 10 # We assume students would give their favorite animes this score
@@ -91,17 +167,3 @@ ggplot(df, aes(x=Student, y=Score)) +
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
 ```
 
-## Let's explore the distribution of ratings among some different groupings
-
-# First, does type (Movie, TV show,...) matter?
-```{r}
-animes %>% 
-  ggplot(aes(rating, group = type)) +
-  geom_density(aes(fill = type), alpha = .4) +
-  xlim(0, 10)
-```
-
-# Explore the genre too!
-```{r}
-
-```
