@@ -34,7 +34,7 @@ MAX_SCORE <- 10 # We assume students would give their favorite animes this score
 MIN_SCORE <- 1 # We assume students would give their least fav animes this score
 
 students <- c("Adriana", "Beau", "David", "Fanny", "Joe", "Kevin", "Lilly (Ralf)", "Lydia", "Mac", "Michael", "Noah", "Richard", "Roger", "Saad", "Shane", "Stephanie", "Ty", "Xiaotai")
-fav_animes <- c("Psycho-Pass", "One Punch Man", "Cowboy Bebop", "", "FLCL", "Death Note", "Last Exile", "JoJo no Kimyou na Bouken (TV)", "Pokemon", "Tonari no Totoro", "Ginga Eiyuu Densetsu", "Afro Samurai", "Yuri!!! on Ice", "Dragon Ball Z", "JoJo no Kimyou na Bouken: Diamond wa Kudakenai", "Ouran Koukou Host Club", "Mushishi", "Doraemon (2005)")
+fav_animes <- c("Psycho-Pass", "One Punch Man", "Cowboy Bebop", "", "FLCL", "Death Note", "Last Exile", "JoJo no Kimyou na Bouken (TV)", "Pokemon", "Tonari no Totoro", "Ginga Eiyuu Densetsu", "Afro Samurai", "Yuri!!! on Ice", "Dragon Ball Z", "JoJo no Kimyou na Bouken: Diamond wa Kudakenai", "Ouran Koukou Host Club", "Mushishi", "Doraemon (1979)")
 
 calculate_culture_score <- function (fav_anime) {
   anime_from_data <- filter(animes, name == fav_anime)
