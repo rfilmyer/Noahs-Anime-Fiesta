@@ -21,7 +21,7 @@ write.csv(unique_ids, fOut, row.names = FALSE) # one id per line
 close(fOut)
 
 # Normalize the data by splitting genres into a separate table
-genre_df <- data.frame(id = animes$anime_id, genre = animes$genre, stringsAsFactors=FALSE)
+genre_df <- data.frame(anime_id = animes$anime_id, genre = animes$genre, stringsAsFactors=FALSE)
 genre_df <- genre_df %>% unnest(genre = strsplit(genre, ","))
 genre_df$genre <- trimws(genre_df$genre)
 fOut <- file('data/clean/genres.csv')

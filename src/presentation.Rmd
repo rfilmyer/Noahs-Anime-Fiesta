@@ -23,6 +23,7 @@ lib('ggplot2')
 theme_set(theme_bw())
 lib('tidyverse')
 lib('formattable')
+lib('plotly')
 lib('pander')
 panderOptions('table.split.table', Inf)
 ```
@@ -43,7 +44,7 @@ df <- df[order(df$Rating, decreasing = TRUE), ]  # sort by ranking
 df$Anime <- factor(df$Anime, levels = df$Anime)  # to retain the order in plot
 df <- df[1:N,] # cut off the top N
 
-ggplot(df, aes(x=Anime, y=Rating)) + 
+df %>% ggplot(aes(x=Anime, y=Rating)) + 
   geom_bar(stat="identity", width=.5, fill="tomato3") + 
   coord_cartesian(ylim = c(9.0, 10.0)) +
   labs(title="Top Anime Ratings",
@@ -57,6 +58,7 @@ ggplot(df, aes(x=Anime, y=Rating)) +
 ```{r}
 animes %>% 
   ggplot(aes(rating, group = type)) +
+  labs(title = "Average Anime Ratings by Type") +
   geom_density(aes(fill = type), alpha = .4) +
   xlim(0, 10)
 ```
@@ -66,8 +68,8 @@ animes %>%
 animes %>% 
   group_by(type) %>% 
   summarise(
-    average.people = mean(members),
-    sd.people = sd(members),
+    average.viewers = mean(members),
+    sd.viewers = sd(members),
     average.rating = mean(rating, na.rm = T),
     sd.rating = sd(rating, na.rm = T)
   ) %>% 
@@ -75,24 +77,31 @@ animes %>%
 ```
 
 
-# Explore the genre too!
+# Explore the genres too!
 ```{r}
-#g <- genres %>% 
-#  ggplot(aes(rating, group = genre)) +
-#  geom_density(aes(fill = genre), alpha = .4)
+animes_subset_ratings <- animes %>% select("anime_id", "rating")
+genres_with_ratings <- inner_join(genres, animes_subset_ratings, by = "anime_id")
 
-#ggplotly(g)
+g <- genres_with_ratings %>% 
+  ggplot(aes(rating, group = genre)) +
+  geom_density(aes(fill = genre), alpha = .4)
+
+ggplotly(g)
 ```
+
+# No one likes dementia.
 
 # In our dataset, what's the distribution of user ratings?
 ```{r}
-g <- ratings %>% ggplot() # Common data throughout all plots
-
-g + geom_bar(aes(x = factor(rating))) # Bar plot
+g_bar <- ratings %>% ggplot(aes(x = factor(rating))) +
+  geom_bar() # Bar plot
+ggplotly(g_bar)
 
 # Create a fake grouping variable, for a violin plot of 1 dim 
-g + geom_violin(aes(x = factor(0), y = rating), trim = FALSE) + 
-  xlab("") + scale_x_discrete(breaks = NULL)
+g_violin <- ratings %>% ggplot(aes(x = factor(0), y = rating)) + 
+  geom_violin(trim = FALSE, adjust = 2) + 
+  xlab("") + geom_boxplot(width=0.1)
+ggplotly(g_violin)
   
 summary(ratings$rating)
 ratings.sd <- sd(ratings$rating)
@@ -113,7 +122,7 @@ g <- school_days.ratings %>% ggplot() # Common data throughout all plots
 g + geom_bar(aes(x = factor(rating))) # Bar plot
 
 # Create a fake grouping variable, for a boxplot of 1 dim
-g + geom_violin(aes(x = factor(0), y = as.factor(rating)), trim = FALSE) + 
+g + geom_violin(aes(x = factor(0), y = rating), trim = FALSE, adjust = 2) + 
   xlab("") + scale_x_discrete(breaks = NULL)
 ```
 # Yeah, looks like the 
