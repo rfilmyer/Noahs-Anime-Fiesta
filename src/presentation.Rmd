@@ -89,27 +89,29 @@ g <- genres_with_ratings %>%
 ggplotly(g)
 ```
 
-# No one likes dementia.
+# The Dementia genre is very unpopular. The Harem genre has a very high thin peak, indicating little variance. Maybe they're all basically the same?
 
 # In our dataset, what's the distribution of user ratings?
 ```{r}
-g_bar <- ratings %>% ggplot(aes(x = factor(rating))) +
-  geom_bar() # Bar plot
-ggplotly(g_bar)
+g <- ratings %>% ggplot(aes(x = factor(rating))) +
+  geom_bar() + labs(title = "Distribution of ratings")
 
-# Create a fake grouping variable, for a violin plot of 1 dim 
-g_violin <- ratings %>% ggplot(aes(x = factor(0), y = rating)) + 
-  geom_violin(trim = FALSE, adjust = 2) + 
-  xlab("") + geom_boxplot(width=0.1)
-ggplotly(g_violin)
-  
-summary(ratings$rating)
-ratings.sd <- sd(ratings$rating)
-print(ratings.sd)
+ggplotly(g)
 ```
 
-# School days is a notoriously controversial anime. Is the variance of users' ratings of this anime higher
-# than it is for most anime?
+# What about the distribution of users' average rating?
+```{r}
+g <- ratings %>% 
+  group_by(user_id) %>% 
+  summarise(m = mean(rating)) %>% 
+  ggplot(aes(m)) +
+  geom_density() +
+  labs(title = "Distribution of average rating over users")
+
+ggplotly(g)
+```
+
+# School days is a notoriously controversial anime. Is the variance of users' ratings of this anime higher than it is for most anime?
 ```{r}
 school_days.id <- filter(animes, name == "School Days")$anime_id
 school_days.ratings <- filter(ratings, anime_id == school_days.id)
@@ -117,9 +119,22 @@ school_days.sd <- sd(school_days.ratings$rating)
 print(ratings.sd)
 print(school_days.sd)
 
-g <- school_days.ratings %>% ggplot() # Common data throughout all plots
+summary(ratings$rating)
+ratings.sd <- sd(ratings$rating)
+print(ratings.sd)
+```
 
-g + geom_bar(aes(x = factor(rating))) # Bar plot
+# Yes it is! Let's visualize that
+```{r}
+school_days.ratings %>% ggplot(aes(x = bin, y = ..density.., group = source, fill = source)) +
+    geom_bar(alpha = 0.5, position = 'identity')
+
+g <- school_days.ratings %>% ggplot(aes(x = rating))
+
+g + geom_density()
+g + geom_bar() # Bar plot
+
+ggplotly(g)
 
 # Create a fake grouping variable, for a boxplot of 1 dim
 g + geom_violin(aes(x = factor(0), y = rating), trim = FALSE, adjust = 2) + 
@@ -165,7 +180,7 @@ ggplot(df, aes(x=Student, y=Score)) +
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
 ```
 
-# The scale is thrown off by Fanny's NA. Let's try again removing the outlier.
+# The scale is thrown off by one NA. Let's try again removing the outlier.
 ```{r}
 df <- filter(df, Score < 60)
 ggplot(df, aes(x=Student, y=Score)) + 
