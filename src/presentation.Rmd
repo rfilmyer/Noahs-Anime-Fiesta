@@ -116,7 +116,6 @@ ggplotly(g)
 school_days.id <- filter(animes, name == "School Days")$anime_id
 school_days.ratings <- filter(ratings, anime_id == school_days.id)
 school_days.sd <- sd(school_days.ratings$rating)
-print(ratings.sd)
 print(school_days.sd)
 
 summary(ratings$rating)
