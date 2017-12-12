@@ -164,29 +164,32 @@ calculate_culture_score <- function (fav_anime) {
 }
 
 weeb.scores <- sapply(fav_animes, calculate_culture_score)
-weeb.scores <- unname(weeb.scores)
 
 df <- data.frame(Student = students, Score = weeb.scores, stringsAsFactors = TRUE) # want names as factors for plotting
   
-df <- df[order(df$Score), ]  # sort by ranking
+df <- df[order(df$Score), ,]  # sort by ranking
 df$Student <- factor(df$Student, levels = df$Student)  # to retain the order in plot
 
-ggplot(df, aes(x=Student, y=Score)) + 
+g <- ggplot(df, aes(x=Student, y=Score, text = paste("Anime: ", rownames(df)))) + 
   geom_bar(stat="identity", width=.5, fill="tomato3") + 
   labs(title="Class Rankings", 
        subtitle="Culture Score", 
        caption="source: In-Class Survey") + 
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+ggplotly(g, tooltip = c("text", "x"))
 ```
 
 # The scale is thrown off by one NA. Let's try again removing the outlier.
 ```{r}
-df <- filter(df, Score < 60)
-ggplot(df, aes(x=Student, y=Score)) + 
+df <- df[1:nrow(df)-1,] # chop off last row
+g <- ggplot(df, aes(x=Student, y=Score, text = paste("Anime: ", rownames(df)))) + 
   geom_bar(stat="identity", width=.5, fill="tomato3") + 
   labs(title="Class Rankings", 
-       subtitle="Squared Error of Favorite Anime Rating", 
+       subtitle="Culture Score", 
        caption="source: In-Class Survey") + 
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+ggplotly(g, tooltip = c("text", "x"))
 ```
 
